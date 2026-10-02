@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+
+{% block title %}Budget Management{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+  <div>
+    <h2 class="fw-bold mb-1">Monthly Budget Management 📊</h2>
+    <p class="text-muted mb-0">Set spending caps by category and prevent overspending before it happens.</p>
+  </div>
+  <div class="d-flex align-items-center gap-2">
+    <!-- Month/Year selector -->
+    <form method="GET" action="{{ url_for('budget.budget_view') }}" class="d-flex align-items-center gap-2">
+      <select name="month" class="form-select form-select-sm" onchange="this.form.submit()">
+        {% for m in range(1, 13) %}
+          <option value="{{ m }}" {% if m == selected_month %}selected{% endif %}>
+            {{ ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1] }}
+          </option>
+        {% endfor %}
+      </select>
+      <select name="year" class="form-select form-select-sm" onchange="this.form.submit()">
+        {% for y in range(selected_year - 2, selected_year + 2) %}
+          <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+      </select>
+    </form>
+
+    <button type="button" class="btn btn-primary fw-semibold d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#setBudgetModal">
+      <i class="bi bi-plus-lg"></i> Set Budget
+    </button>
+  </div>
+</div>
+
+<!-- Summary Metrics Row -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="finance-card stat-card">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="stat-label">Total Monthly Budget</div>
+          <div class="stat-value text-primary">{{ budget_data.total_budgeted | currency }}</div>
+          <span class="text-muted small mt-1 d-block">{{ budget_data.budget_list|length }} categories configured</span>
+        </div>
+        <div class="stat-icon savings">
+          <i class="bi bi-sliders"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="finance-card stat-card">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="stat-label">Total Spent In Budgets</div>
+          <div class="stat-value text-danger">{{ budget_data.total_budget_spent | currency }}</div>
+          <span class="text-muted small mt-1 d-block">
+            {% if budget_data.total_budgeted > 0 %}
+              {{ (budget_data.total_budget_spent / budget_data.total_budgeted * 100.0) | round(1) }}% of total budget used
+            {% else %}
+              0% used
+            {% endif %}
+          </span>
+        </div>
+        <div class="stat-icon expense">
+          <i class="bi bi-cart-check"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="finance-card stat-card">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="stat-label">Over Budget Alerts</div>
+          <div class="stat-value {% if budget_data.over_budget_count > 0 %}text-danger{% else %}text-success{% endif %}">
+            {{ budget_data.over_budget_count }}
+          </div>
+          <span class="text-muted small mt-1 d-block">
+            {% if budget_data.over_budget_count > 0 %}
+              Requires immediate spending restraint
+            {% else %}
+              All categories within target limits
+            {% endif %}
+          </span>
+        </div>
+        <div class="stat-icon {% if budget_data.over_budget_count > 0 %}expense{% else %}income{% endif %}">
+          <i class="bi {% if budget_data.over_budget_count > 0 %}bi-exclamation-octagon-fill{% else %}bi-shield-check{% endif %}"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Budget Table Card -->
+<div class="finance-card">
+  <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+    <h5 class="fw-bold mb-0">Category Budgets</h5>
+    <span class="badge bg-light text-dark border">{{ budget_data.budget_list|length }} Budgets Set</span>
+  </div>
+
+  {% if budget_data.budget_list %}
+  <div class="table-responsive">
+    <table class="table table-custom mb-0 align-middle">
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Budget Limit</th>
+          <th>Spent</th>
+          <th>Remaining</th>
+          <th style="min-width: 180px;">Progress</th>
+          <th>Status</th>
+          <th class="text-center" style="width: 100px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in budget_data.budget_list %}
+        <tr>
+          <td class="fw-bold">{{ b.category }}</td>
+          <td>{{ b.limit | currency }}</td>
+          <td class="fw-semibold">{{ b.spent | currency }}</td>
+          <td class="text-secondary">{{ b.remaining | currency }}</td>
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <div class="progress flex-grow-1" style="height: 8px;">
+                <div class="progress-bar bg-{{ b.status_class }}" role="progressbar" style="width: {{ b.progress_bar_pct }}%;" aria-valuenow="{{ b.percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+              </div>
+              <span class="small fw-semibold" style="width: 45px;">{{ b.percentage }}%</span>
+            </div>
+          </td>
+          <td>
+            <span class="status-badge badge-{{ 'over' if b.status_class == 'danger' else ('near' if b.status_class == 'warning' else 'within') }}">
+              <i class="bi {{ b.badge_icon }}"></i>
+              {{ b.status }}
+            </span>
+          </td>
+          <td class="text-center">
+            <div class="d-inline-flex gap-1">
+              <form action="{{ url_for('budget.delete_budget', budget_id=b.id) }}" method="POST" onsubmit="return confirm('Remove budget for {{ b.category }}?');" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="text-center py-5">
+    <i class="bi bi-pie-chart text-muted display-4 d-block mb-3"></i>
+    <h5 class="fw-bold">No budgets created for this month</h5>
+    <p class="text-muted small mb-3">Set monthly caps for Food, Rent, Transport, or Entertainment to track limits.</p>
+    <button type="button" class="btn btn-primary fw-semibold" data-bs-toggle="modal" data-bs-target="#setBudgetModal">
+      <i class="bi bi-plus-lg me-1"></i> Set Category Budget
+    </button>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Set Budget Modal -->
+<div class="modal fade" id="setBudgetModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">Set Monthly Category Budget</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="{{ url_for('budget.set_budget') }}" method="POST">
+        <input type="hidden" name="month" value="{{ selected_month }}">
+        <input type="hidden" name="year" value="{{ selected_year }}">
+
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Expense Category</label>
+            <select name="category" class="form-select" required>
+              <option value="" disabled selected>Select category to budget...</option>
+              {% for cat in all_categories %}
+                <option value="{{ cat }}">{{ cat }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Monthly Limit Amount (₹)</label>
+            <input type="number" step="0.01" min="1" name="limit_amount" class="form-control" placeholder="e.g. 5000" required>
+          </div>
+          <div class="p-3 bg-light rounded-3 small text-muted">
+            <i class="bi bi-info-circle me-1 text-primary"></i>
+            Setting a budget will track expenses for {{ ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][selected_month-1] }} {{ selected_year }}. If this category already has a budget, it will be updated.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary fw-semibold">Save Budget</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

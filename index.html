@@ -1,0 +1,280 @@
+{% extends 'base.html' %}
+
+{% block title %}Smart Money Management & Budgeting{% endblock %}
+
+{% block public_content %}
+<!-- Landing Page Navigation -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark py-3">
+  <div class="container">
+    <a class="navbar-brand d-flex align-items-center gap-2" href="{{ url_for('landing') }}">
+      <div class="brand-icon-box" style="width: 32px; height: 32px; font-size: 1rem;">
+        <i class="bi bi-wallet2"></i>
+      </div>
+      <span class="fw-bold tracking-tight">Personal Finance Advisor</span>
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#landingNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="landingNav">
+      <ul class="navbar-nav ms-auto align-items-center gap-2 mt-3 mt-lg-0">
+        <li class="nav-item">
+          <a class="nav-link text-white-50" href="#features">Features</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link text-white-50" href="#how-it-works">How It Works</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link text-white-50" href="#security">Security</a>
+        </li>
+        <li class="nav-item ms-lg-2">
+          <a class="btn btn-outline-light px-3 py-1" href="{{ url_for('auth.login') }}">Login</a>
+        </li>
+        <li class="nav-item">
+          <a class="btn btn-success px-4 py-1 fw-semibold" href="{{ url_for('auth.register') }}">Get Started</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero Section -->
+<header class="landing-hero text-center">
+  <div class="container position-relative py-5">
+    <div class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25 px-3 py-2 rounded-pill mb-3 fw-semibold">
+      <i class="bi bi-stars me-1"></i> AI-Powered Personal Finance
+    </div>
+    <h1 class="display-4 fw-bold mb-3 text-white">Your Personal AI Finance Advisor</h1>
+    <p class="lead text-white-50 mx-auto mb-4" style="max-width: 720px; font-size: 1.25rem;">
+      Track your money, understand your spending, build better budgets, and achieve your savings goals with AI-powered insights.
+    </p>
+    <div class="d-flex flex-wrap justify-content-center gap-3">
+      <a href="{{ url_for('auth.register') }}" class="btn btn-success btn-lg px-4 py-3 fw-bold shadow-sm d-inline-flex align-items-center gap-2">
+        <i class="bi bi-rocket-takeoff"></i> Get Started Free
+      </a>
+      <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light btn-lg px-4 py-3 fw-semibold">
+        <i class="bi bi-box-arrow-in-right"></i> Login
+      </a>
+    </div>
+
+    <!-- Hero Card Mockup Preview -->
+    <div class="row justify-content-center mt-5">
+      <div class="col-lg-10">
+        <div class="p-3 bg-white bg-opacity-10 rounded-4 border border-white border-opacity-15 shadow-lg backdrop-blur">
+          <div class="bg-white rounded-3 p-4 text-start shadow-sm text-dark">
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+              <div>
+                <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1">Fintech Live Overview</span>
+                <h5 class="fw-bold mt-1 mb-0">Understand your money. Plan smarter. Save better.</h5>
+              </div>
+              <span class="text-muted small"><i class="bi bi-shield-check text-success"></i> Educational Planning Tool</span>
+            </div>
+            <div class="row g-3">
+              <div class="col-md-3">
+                <div class="p-3 rounded-3 bg-light">
+                  <span class="text-muted small d-block">Monthly Income</span>
+                  <span class="fs-5 fw-bold text-success">₹30,000.00</span>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="p-3 rounded-3 bg-light">
+                  <span class="text-muted small d-block">Monthly Expenses</span>
+                  <span class="fs-5 fw-bold text-danger">₹22,000.00</span>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="p-3 rounded-3 bg-light">
+                  <span class="text-muted small d-block">Net Savings</span>
+                  <span class="fs-5 fw-bold text-primary">₹8,000.00</span>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="p-3 rounded-3 bg-light">
+                  <span class="text-muted small d-block">Savings Rate</span>
+                  <span class="fs-5 fw-bold text-purple">26.7%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Features Section -->
+<section id="features" class="py-5 bg-light">
+  <div class="container py-4">
+    <div class="text-center mb-5">
+      <h6 class="text-uppercase text-success fw-bold tracking-wider">Features</h6>
+      <h2 class="fw-bold">Everything You Need to Master Your Money</h2>
+      <p class="text-muted">A comprehensive personal finance toolkit built for students, professionals, and smart savers.</p>
+    </div>
+
+    <div class="row g-4">
+      <!-- 1. Income Tracking -->
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-box">
+          <div class="stat-icon income mb-3">
+            <i class="bi bi-cash-stack"></i>
+          </div>
+          <h5 class="fw-bold">1. Income Tracking</h5>
+          <p class="text-muted small">Record income from salaries, freelance projects, scholarships, and allowances with dates, sources, and notes.</p>
+        </div>
+      </div>
+
+      <!-- 2. Expense Management -->
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-box">
+          <div class="stat-icon expense mb-3">
+            <i class="bi bi-receipt"></i>
+          </div>
+          <h5 class="fw-bold">2. Expense Management</h5>
+          <p class="text-muted small">Log daily spending across standardized categories such as Food, Rent, Transport, Education, and Entertainment.</p>
+        </div>
+      </div>
+
+      <!-- 3. Smart Budgeting -->
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-box">
+          <div class="stat-icon savings mb-3">
+            <i class="bi bi-sliders"></i>
+          </div>
+          <h5 class="fw-bold">3. Smart Budgeting</h5>
+          <p class="text-muted small">Set custom monthly category budgets and automatically receive alerts for Near Budget Limit and Over Budget thresholds.</p>
+        </div>
+      </div>
+
+      <!-- 4. AI Financial Insights -->
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-box">
+          <div class="stat-icon rate mb-3">
+            <i class="bi bi-robot"></i>
+          </div>
+          <h5 class="fw-bold">4. AI Financial Insights</h5>
+          <p class="text-muted small">Powered by Gemini AI (with built-in rule-based fallback) to generate actionable savings suggestions and health analysis.</p>
+        </div>
+      </div>
+
+      <!-- 5. Savings Goals -->
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-box">
+          <div class="stat-icon income mb-3">
+            <i class="bi bi-trophy-fill"></i>
+          </div>
+          <h5 class="fw-bold">5. Savings Goals</h5>
+          <p class="text-muted small">Track progress toward life milestones like an Emergency Fund, New Laptop, or Vacation with automated milestone progress.</p>
+        </div>
+      </div>
+
+      <!-- 6. Financial Analytics -->
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-box">
+          <div class="stat-icon savings mb-3">
+            <i class="bi bi-pie-chart-fill"></i>
+          </div>
+          <h5 class="fw-bold">6. Financial Analytics</h5>
+          <p class="text-muted small">Visual interactive charts: Category Doughnut Breakdown, 6-Month Income vs Expense Bar, and Spending Trend curves.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- How It Works Section -->
+<section id="how-it-works" class="py-5 bg-white">
+  <div class="container py-4">
+    <div class="text-center mb-5">
+      <h6 class="text-uppercase text-primary fw-bold tracking-wider">Simple 3-Step Process</h6>
+      <h2 class="fw-bold">How It Works</h2>
+      <p class="text-muted">Take control of your personal finances in minutes.</p>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="step-card">
+          <div class="step-num">1</div>
+          <h4 class="fw-bold mb-2">Track</h4>
+          <p class="text-muted">Record your monthly income and log daily expenses easily with categorized tagging.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="step-card">
+          <div class="step-num" style="background: var(--secondary);">2</div>
+          <h4 class="fw-bold mb-2">Analyze</h4>
+          <p class="text-muted">Understand where your money goes with visual breakdown charts and budget limit trackers.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="step-card">
+          <div class="step-num" style="background: var(--accent-purple);">3</div>
+          <h4 class="fw-bold mb-2">Improve</h4>
+          <p class="text-muted">Get personalized AI-powered recommendations to cut waste and boost your savings rate.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Security Section -->
+<section id="security" class="py-5 bg-light">
+  <div class="container py-4">
+    <div class="row align-items-center g-4">
+      <div class="col-lg-6">
+        <div class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-1 rounded-pill mb-2 fw-semibold">
+          Data Security & Privacy
+        </div>
+        <h2 class="fw-bold mb-3">Engineered with Privacy and Security First</h2>
+        <p class="text-muted mb-4">
+          Financial information is confidential. We follow robust web application security practices:
+        </p>
+        <ul class="list-unstyled d-flex flex-column gap-3">
+          <li class="d-flex align-items-start gap-3">
+            <i class="bi bi-shield-lock-fill text-success fs-4"></i>
+            <div>
+              <strong>Secure Password Hashing:</strong> User credentials are protected using industry-standard Werkzeug scrypt hashing algorithms.
+            </div>
+          </li>
+          <li class="d-flex align-items-start gap-3">
+            <i class="bi bi-key-fill text-primary fs-4"></i>
+            <div>
+              <strong>Protected Environment Variables:</strong> All API keys and secrets are loaded via environment variables and never hard-coded.
+            </div>
+          </li>
+          <li class="d-flex align-items-start gap-3">
+            <i class="bi bi-person-check-fill text-secondary fs-4"></i>
+            <div>
+              <strong>Isolated User Records:</strong> Session-based authentication ensures users can only access and modify their own financial records.
+            </div>
+          </li>
+        </ul>
+      </div>
+      <div class="col-lg-6 text-center">
+        <div class="p-5 bg-white rounded-4 border shadow-sm">
+          <i class="bi bi-shield-fill-check text-success" style="font-size: 5rem;"></i>
+          <h4 class="fw-bold mt-3">100% Protected Data</h4>
+          <p class="text-muted small">No third-party tracking, no payment card storage, and clean sandboxed SQLite storage.</p>
+          <a href="{{ url_for('auth.register') }}" class="btn btn-success px-4 py-2 fw-semibold">Join Today</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="bg-dark text-white py-4 border-top border-secondary">
+  <div class="container text-center">
+    <div class="d-flex align-items-center justify-content-center gap-2 mb-2">
+      <div class="brand-icon-box" style="width: 26px; height: 26px; font-size: 0.8rem;">
+        <i class="bi bi-wallet2"></i>
+      </div>
+      <span class="fw-bold">Personal Finance Advisor Bot</span>
+    </div>
+    <p class="text-white-50 small mb-2">
+      AI-powered personal financial planning and budgeting platform.
+    </p>
+    <p class="text-white-50 small mb-0" style="font-size: 0.75rem;">
+      &copy; {{ current_year }} Personal Finance Advisor. Built for student project demonstration and academic evaluation.
+    </p>
+  </div>
+</footer>
+{% endblock %}

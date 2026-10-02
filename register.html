@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}Register{% endblock %}
+
+{% block public_content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+      <div class="text-center mb-4">
+        <a href="{{ url_for('landing') }}" class="text-decoration-none d-inline-flex align-items-center gap-2 mb-2">
+          <div class="brand-icon-box">
+            <i class="bi bi-wallet2"></i>
+          </div>
+          <span class="fs-4 fw-bold text-dark">{{ app_name }}</span>
+        </a>
+        <p class="text-muted small">Create your account to start managing your personal finances.</p>
+      </div>
+
+      <div class="finance-card p-4 p-md-5">
+        <h4 class="fw-bold mb-3">Create an Account</h4>
+
+        <form action="{{ url_for('auth.register') }}" method="POST">
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Full Name</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-muted"><i class="bi bi-person"></i></span>
+              <input type="text" name="name" class="form-control" placeholder="e.g. John Doe" value="{{ name if name else '' }}" required autofocus>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Email Address</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-muted"><i class="bi bi-envelope"></i></span>
+              <input type="email" name="email" class="form-control" placeholder="name@example.com" value="{{ email if email else '' }}" required>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Password</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-muted"><i class="bi bi-lock"></i></span>
+              <input type="password" name="password" class="form-control" placeholder="At least 6 characters" required>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label small fw-semibold">Confirm Password</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-muted"><i class="bi bi-shield-check"></i></span>
+              <input type="password" name="confirm_password" class="form-control" placeholder="Repeat your password" required>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-success w-100 py-2 fw-semibold">
+            <i class="bi bi-check2-circle me-1"></i> Register Account
+          </button>
+        </form>
+
+        <div class="text-center mt-4 pt-3 border-top">
+          <span class="text-muted small">Already have an account? </span>
+          <a href="{{ url_for('auth.login') }}" class="fw-semibold text-primary text-decoration-none">Sign In</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

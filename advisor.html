@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+
+{% block title %}AI Financial Advisor{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+  <div>
+    <h2 class="fw-bold mb-1">AI Financial Advisor 🤖</h2>
+    <p class="text-muted mb-0">Personalized spending intelligence, budget recommendations, and savings guidance.</p>
+  </div>
+  <div class="d-flex align-items-center gap-2">
+    <!-- Month/Year selector -->
+    <form method="GET" action="{{ url_for('advisor.advisor_view') }}" class="d-flex align-items-center gap-2">
+      <select name="month" class="form-select form-select-sm" onchange="this.form.submit()">
+        {% for m in range(1, 13) %}
+          <option value="{{ m }}" {% if m == selected_month %}selected{% endif %}>
+            {{ ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1] }}
+          </option>
+        {% endfor %}
+      </select>
+      <select name="year" class="form-select form-select-sm" onchange="this.form.submit()">
+        {% for y in range(selected_year - 2, selected_year + 2) %}
+          <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+      </select>
+    </form>
+    <a href="{{ url_for('advisor.advisor_view', month=selected_month, year=selected_year) }}" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1">
+      <i class="bi bi-arrow-clockwise"></i> Refresh Insights
+    </a>
+  </div>
+</div>
+
+<!-- Source / Status Alert Badge -->
+{% if insights.is_ai %}
+  <div class="alert alert-success d-flex align-items-center gap-2 p-3 mb-4 rounded-3 border-0 shadow-sm" role="alert">
+    <i class="bi bi-stars fs-4 text-success"></i>
+    <div>
+      <span class="fw-bold d-block">Powered by Gemini AI (1.5 Flash)</span>
+      <span class="small text-muted">Insights generated using structured analysis of your actual transactions and budgets.</span>
+    </div>
+  </div>
+{% else %}
+  <div class="alert alert-warning d-flex align-items-center gap-2 p-3 mb-4 rounded-3 border-0 shadow-sm" role="alert">
+    <i class="bi bi-cpu-fill fs-4 text-warning"></i>
+    <div>
+      <span class="fw-bold d-block">{{ insights.notice if insights.notice else 'AI service unavailable — showing automated financial insights instead.' }}</span>
+      <span class="small text-muted">Running on our intelligent rule-based engine. Add your <code>GEMINI_API_KEY</code> in <code>.env</code> to activate Gemini AI generation.</span>
+    </div>
+  </div>
+{% endif %}
+
+<!-- Financial Snapshot Strip -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-md-3">
+    <div class="p-3 bg-white rounded-3 border text-center shadow-sm">
+      <span class="text-muted small d-block">Monthly Income</span>
+      <span class="fs-5 fw-bold text-success">{{ summary.total_income | currency }}</span>
+    </div>
+  </div>
+  <div class="col-sm-6 col-md-3">
+    <div class="p-3 bg-white rounded-3 border text-center shadow-sm">
+      <span class="text-muted small d-block">Monthly Expenses</span>
+      <span class="fs-5 fw-bold text-danger">{{ summary.total_expenses | currency }}</span>
+    </div>
+  </div>
+  <div class="col-sm-6 col-md-3">
+    <div class="p-3 bg-white rounded-3 border text-center shadow-sm">
+      <span class="text-muted small d-block">Net Savings</span>
+      <span class="fs-5 fw-bold {% if summary.total_savings >= 0 %}text-primary{% else %}text-danger{% endif %}">
+        {{ summary.total_savings | currency }}
+      </span>
+    </div>
+  </div>
+  <div class="col-sm-6 col-md-3">
+    <div class="p-3 bg-white rounded-3 border text-center shadow-sm">
+      <span class="text-muted small d-block">Savings Rate</span>
+      <span class="fs-5 fw-bold text-purple">{{ summary.savings_rate }}%</span>
+    </div>
+  </div>
+</div>
+
+<!-- Conversational AI Assistant Card -->
+<div class="finance-card p-4 p-md-5 mb-4 position-relative">
+  <div class="advisor-bot-header">
+    <div class="advisor-bot-avatar">
+      <i class="bi bi-robot"></i>
+    </div>
+    <div>
+      <h4 class="fw-bold mb-1">Financial Assessment for {{ current_user.name }}</h4>
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">{{ insights.source }}</span>
+        <span class="text-muted small">&bull; Analyzed for {{ summary.month_name }}</span>
+      </div>
+    </div>
+  </div>
+
+  <hr class="my-4">
+
+  <!-- 1. Spending Summary -->
+  <div class="mb-4">
+    <div class="d-flex align-items-center gap-2 mb-2">
+      <i class="bi bi-chat-left-quote-fill text-primary fs-5"></i>
+      <h5 class="fw-bold mb-0">1. Spending Analysis</h5>
+    </div>
+    <div class="p-3 bg-light rounded-3 border text-secondary fs-6">
+      {{ insights.summary }}
+    </div>
+  </div>
+
+  <!-- 2. Overspending Detection / Top Concern -->
+  <div class="mb-4">
+    <div class="d-flex align-items-center gap-2 mb-2">
+      <i class="bi bi-exclamation-triangle-fill text-danger fs-5"></i>
+      <h5 class="fw-bold mb-0">2. Overspending & Category Detection</h5>
+    </div>
+    <div class="p-3 bg-danger-subtle rounded-3 border border-danger-subtle text-danger-emphasis fs-6">
+      <strong>Alert:</strong> {{ insights.top_concern }}
+    </div>
+  </div>
+
+  <!-- 3. Practical Saving Suggestions -->
+  <div class="mb-4">
+    <div class="d-flex align-items-center gap-2 mb-2">
+      <i class="bi bi-lightbulb-fill text-warning fs-5"></i>
+      <h5 class="fw-bold mb-0">3. Practical Saving Recommendations</h5>
+    </div>
+    <div class="row g-2">
+      {% for sug in insights.suggestions %}
+      <div class="col-md-4">
+        <div class="p-3 bg-light rounded-3 border h-100">
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge bg-success rounded-circle" style="width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center;">{{ loop.index }}</span>
+            <span class="fw-semibold text-dark small">Action Step</span>
+          </div>
+          <p class="text-secondary small mb-0">{{ sug }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- 4. Budget Recommendations -->
+  <div class="mb-4">
+    <div class="d-flex align-items-center gap-2 mb-2">
+      <i class="bi bi-sliders text-secondary fs-5"></i>
+      <h5 class="fw-bold mb-0">4. Suggested Budget Adjustments</h5>
+    </div>
+    <div class="p-3 bg-light rounded-3 border text-secondary fs-6">
+      {{ insights.budget_recommendation }}
+    </div>
+  </div>
+
+  <!-- 5. Emergency Fund Guidance -->
+  <div class="mb-4">
+    <div class="d-flex align-items-center gap-2 mb-2">
+      <i class="bi bi-shield-lock-fill text-success fs-5"></i>
+      <h5 class="fw-bold mb-0">5. Emergency Fund Guidance</h5>
+    </div>
+    <div class="p-3 bg-success-subtle rounded-3 border border-success-subtle text-success-emphasis fs-6">
+      {{ insights.emergency_fund_guidance }}
+    </div>
+  </div>
+
+  <!-- 6. Overall Financial Health Summary -->
+  <div class="mb-4">
+    <div class="d-flex align-items-center gap-2 mb-2">
+      <i class="bi bi-award-fill text-purple fs-5"></i>
+      <h5 class="fw-bold mb-0">6. Financial Health Assessment</h5>
+    </div>
+    <div class="p-3 bg-light rounded-3 border text-dark fs-6 fw-medium">
+      {{ insights.health_summary }}
+    </div>
+  </div>
+
+  <!-- Visible Educational Disclaimer -->
+  <div class="p-3 bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-3 small mt-4">
+    <div class="d-flex align-items-center gap-2">
+      <i class="bi bi-shield-exclamation fs-5 flex-shrink-0"></i>
+      <div>
+        <strong>Educational Disclaimer:</strong> {{ insights.disclaimer }}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

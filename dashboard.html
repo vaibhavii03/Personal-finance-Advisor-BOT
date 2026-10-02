@@ -1,0 +1,359 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Top Header & Greetings -->
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+  <div>
+    <h2 class="fw-bold mb-1">{{ greeting }}, {{ current_user.name }} 👋</h2>
+    <p class="text-muted mb-0">Here is your financial overview for {{ summary.month_name }}.</p>
+  </div>
+  <div class="d-flex flex-wrap align-items-center gap-2">
+    <!-- Month/Year Filter Dropdown -->
+    <form method="GET" action="{{ url_for('dashboard.dashboard_view') }}" class="d-flex align-items-center gap-2">
+      <select name="month" class="form-select form-select-sm" onchange="this.form.submit()">
+        {% for m in range(1, 13) %}
+          <option value="{{ m }}" {% if m == selected_month %}selected{% endif %}>
+            {{ ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1] }}
+          </option>
+        {% endfor %}
+      </select>
+      <select name="year" class="form-select form-select-sm" onchange="this.form.submit()">
+        {% for y in range(selected_year - 2, selected_year + 2) %}
+          <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+      </select>
+    </form>
+
+    <a href="{{ url_for('income.income_list') }}" class="btn btn-sm btn-outline-success">
+      <i class="bi bi-plus-circle me-1"></i> Add Income
+    </a>
+    <a href="{{ url_for('expenses.expense_list') }}" class="btn btn-sm btn-outline-danger">
+      <i class="bi bi-dash-circle me-1"></i> Add Expense
+    </a>
+  </div>
+</div>
+
+<!-- Demo Data Banner if user has no data -->
+{% if summary.total_income == 0 and summary.total_expenses == 0 %}
+<div class="alert alert-primary d-flex flex-wrap align-items-center justify-content-between p-3 mb-4 rounded-3 border-0 shadow-sm" role="alert">
+  <div class="d-flex align-items-center gap-3">
+    <i class="bi bi-lightbulb-fill text-primary fs-3"></i>
+    <div>
+      <h6 class="fw-bold mb-0">New here or preparing a presentation?</h6>
+      <span class="small text-muted">Load a realistic sample student/starter financial dataset with one click to see charts, budgets, and AI insights immediately!</span>
+    </div>
+  </div>
+  <form action="{{ url_for('dashboard.load_demo') }}" method="POST" class="mt-2 mt-sm-0">
+    <button type="submit" class="btn btn-primary btn-sm fw-semibold px-3 py-2">
+      <i class="bi bi-magic me-1"></i> Load Demo Data
+    </button>
+  </form>
+</div>
+{% endif %}
+
+<!-- 4 Main KPI Stat Cards -->
+<div class="row g-3 mb-4">
+  <!-- Total Income -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="finance-card stat-card">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="stat-label">Total Income</div>
+          <div class="stat-value text-success">{{ summary.total_income | currency }}</div>
+          <span class="text-muted small mt-1 d-block"><i class="bi bi-calendar-event me-1"></i>{{ summary.month_name }}</span>
+        </div>
+        <div class="stat-icon income">
+          <i class="bi bi-arrow-down-left"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Total Expenses -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="finance-card stat-card">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="stat-label">Total Expenses</div>
+          <div class="stat-value text-danger">{{ summary.total_expenses | currency }}</div>
+          <span class="text-muted small mt-1 d-block"><i class="bi bi-tag me-1"></i>{{ summary.category_list|length }} categories</span>
+        </div>
+        <div class="stat-icon expense">
+          <i class="bi bi-arrow-up-right"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Total Savings -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="finance-card stat-card">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="stat-label">Total Savings</div>
+          <div class="stat-value {% if summary.total_savings >= 0 %}text-primary{% else %}text-danger{% endif %}">
+            {{ summary.total_savings | currency }}
+          </div>
+          <span class="text-muted small mt-1 d-block">
+            {% if summary.total_savings >= 0 %}
+              <i class="bi bi-graph-up-arrow text-success me-1"></i> Net Positive
+            {% else %}
+              <i class="bi bi-graph-down-arrow text-danger me-1"></i> Spending Deficit
+            {% endif %}
+          </span>
+        </div>
+        <div class="stat-icon savings">
+          <i class="bi bi-piggy-bank"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Savings Rate -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="finance-card stat-card">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="stat-label">Savings Rate</div>
+          <div class="stat-value text-purple">{{ summary.savings_rate }}%</div>
+          <span class="text-muted small mt-1 d-block">
+            Target: &ge; 20%
+          </span>
+        </div>
+        <div class="stat-icon rate">
+          <i class="bi bi-pie-chart"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Financial Health Score Card (Section 17) -->
+<div class="finance-card p-4 mb-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <div class="stat-icon rate" style="width: 40px; height: 40px; font-size: 1.2rem;">
+        <i class="bi bi-heart-pulse-fill"></i>
+      </div>
+      <div>
+        <h5 class="fw-bold mb-0">Financial Health Overview</h5>
+        <span class="text-muted small">Educational indicator calculated from your savings, budget adherence, and expense ratio.</span>
+      </div>
+    </div>
+    <div>
+      <span class="badge bg-{{ health_score.badge_class }}-subtle text-{{ health_score.badge_class }} border border-{{ health_score.badge_class }}-subtle px-3 py-2 fs-6 fw-bold">
+        Score: {{ health_score.score }}/100 &bull; {{ health_score.rating }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Progress bar for health score -->
+  <div class="progress mb-3" style="height: 12px; border-radius: 999px;">
+    <div class="progress-bar bg-{{ health_score.badge_class }}" role="progressbar" style="width: {{ health_score.score }}%;" aria-valuenow="{{ health_score.score }}" aria-valuemin="0" aria-valuemax="100"></div>
+  </div>
+
+  <div class="row g-3 text-center pt-2 border-top">
+    <div class="col-sm-3 col-6">
+      <span class="text-muted small d-block">Savings Rate</span>
+      <span class="fw-bold fs-6">{{ health_score.savings_rate }}%</span>
+    </div>
+    <div class="col-sm-3 col-6">
+      <span class="text-muted small d-block">Budget Adherence</span>
+      <span class="fw-bold fs-6">{{ health_score.budget_adherence_pct }}%</span>
+    </div>
+    <div class="col-sm-3 col-6">
+      <span class="text-muted small d-block">Expense Ratio</span>
+      <span class="fw-bold fs-6">{{ health_score.expense_ratio_pct }}%</span>
+    </div>
+    <div class="col-sm-3 col-6">
+      <span class="text-muted small d-block">Assessment</span>
+      <span class="fw-semibold text-{{ health_score.badge_class }} small">{{ health_score.rating }}</span>
+    </div>
+  </div>
+  <p class="text-muted small mt-2 mb-0" style="font-size: 0.75rem;">
+    * Notice: This is an application-generated educational indicator and is not an official financial credit score.
+  </p>
+</div>
+
+<!-- Charts Row (Section 9) -->
+<div class="row g-4 mb-4">
+  <!-- Expense Breakdown Chart (Doughnut) -->
+  <div class="col-lg-5">
+    <div class="finance-card p-4 h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0">Expense Breakdown</h5>
+        <a href="{{ url_for('expenses.expense_list') }}" class="small text-decoration-none">Manage</a>
+      </div>
+      <div style="position: relative; height: 260px;">
+        <canvas id="expenseBreakdownChart"></canvas>
+      </div>
+      {% if summary.top_category %}
+      <div class="text-center mt-3 pt-2 border-top small text-muted">
+        Largest spend: <strong class="text-dark">{{ summary.top_category }}</strong> ({{ summary.top_category_amount | currency }})
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Income vs Expenses (Bar Chart) -->
+  <div class="col-lg-7">
+    <div class="finance-card p-4 h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <h5 class="fw-bold mb-0">Income vs Expenses</h5>
+          <span class="text-muted small">6-Month financial comparison</span>
+        </div>
+        <a href="{{ url_for('reports.monthly_report') }}" class="small text-decoration-none">View Report</a>
+      </div>
+      <div style="position: relative; height: 260px;">
+        <canvas id="incomeVsExpenseChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Spending Trend & Budget Progress Row -->
+<div class="row g-4 mb-4">
+  <!-- Daily Spending Trend Line Chart -->
+  <div class="col-lg-6">
+    <div class="finance-card p-4 h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0">Spending Trend</h5>
+        <span class="text-muted small">Daily trajectory</span>
+      </div>
+      <div style="position: relative; height: 240px;">
+        <canvas id="spendingTrendChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Budget Progress Bars (Section 9) -->
+  <div class="col-lg-6">
+    <div class="finance-card p-4 h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <h5 class="fw-bold mb-0">Budget Progress</h5>
+          <span class="text-muted small">{{ budget_data.budget_list|length }} categories tracked</span>
+        </div>
+        <a href="{{ url_for('budget.budget_view') }}" class="btn btn-sm btn-outline-primary">
+          <i class="bi bi-sliders me-1"></i> Edit Budgets
+        </a>
+      </div>
+
+      {% if budget_data.budget_list %}
+        <div class="d-flex flex-column gap-3">
+          {% for b in budget_data.budget_list[:5] %}
+          <div>
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="fw-semibold small">{{ b.category }}</span>
+              <span class="small">
+                <strong>{{ b.spent | currency }}</strong> / {{ b.limit | currency }}
+                <span class="badge badge-{{ 'over' if b.status_class == 'danger' else ('near' if b.status_class == 'warning' else 'within') }} ms-1">
+                  {{ b.status }}
+                </span>
+              </span>
+            </div>
+            <div class="progress" style="height: 8px;">
+              <div class="progress-bar bg-{{ b.status_class }}" role="progressbar" style="width: {{ b.progress_bar_pct }}%;" aria-valuenow="{{ b.percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="text-center py-4 text-muted">
+          <i class="bi bi-pie-chart text-muted display-6 d-block mb-2"></i>
+          <p class="small mb-2">No budget limits defined for this month.</p>
+          <a href="{{ url_for('budget.budget_view') }}" class="btn btn-sm btn-primary">Set Monthly Budget</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Savings Goals & Recent Transactions -->
+<div class="row g-4 mb-4">
+  <!-- Savings Goals Quick View -->
+  <div class="col-lg-5">
+    <div class="finance-card p-4 h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0">Savings Goals</h5>
+        <a href="{{ url_for('savings.savings_view') }}" class="small text-decoration-none">All Goals</a>
+      </div>
+
+      {% if goals %}
+        <div class="d-flex flex-column gap-3">
+          {% for g in goals[:3] %}
+          <div class="p-3 bg-light rounded-3 border">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="fw-bold">{{ g.name }}</span>
+              <span class="text-success fw-bold">{{ g.progress_percentage }}%</span>
+            </div>
+            <div class="progress mb-2" style="height: 8px;">
+              <div class="progress-bar bg-success" role="progressbar" style="width: {{ g.progress_percentage }}%;"></div>
+            </div>
+            <div class="d-flex justify-content-between small text-muted">
+              <span>Saved: {{ g.current_amount | currency }}</span>
+              <span>Target: {{ g.target_amount | currency }}</span>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="text-center py-4 text-muted">
+          <i class="bi bi-bullseye display-6 d-block mb-2 text-muted"></i>
+          <p class="small mb-2">No active savings goals set.</p>
+          <a href="{{ url_for('savings.savings_view') }}" class="btn btn-sm btn-outline-success">Create Goal</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Recent Transactions Table -->
+  <div class="col-lg-7">
+    <div class="finance-card p-4 h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0">Recent Activity</h5>
+        <a href="{{ url_for('reports.transactions_view') }}" class="small text-decoration-none">Full History</a>
+      </div>
+
+      {% if recent_transactions %}
+      <div class="table-responsive">
+        <table class="table table-custom align-middle">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Category / Source</th>
+              <th>Description</th>
+              <th class="text-end">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in recent_transactions %}
+            <tr>
+              <td class="text-muted small">{{ t.date.strftime('%d %b') }}</td>
+              <td>
+                <span class="badge {% if t.type == 'income' %}badge-income{% else %}badge-expense{% endif %}">
+                  {{ t.source_category }}
+                </span>
+              </td>
+              <td class="small text-truncate" style="max-width: 180px;">{{ t.description or '-' }}</td>
+              <td class="text-end fw-bold {% if t.type == 'income' %}text-success{% else %}text-danger{% endif %}">
+                {% if t.type == 'income' %}+{% else %}-{% endif %}{{ t.amount | currency }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+        <div class="text-center py-4 text-muted">
+          <i class="bi bi-clock-history display-6 d-block mb-2 text-muted"></i>
+          <p class="small mb-0">No recent transactions recorded.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

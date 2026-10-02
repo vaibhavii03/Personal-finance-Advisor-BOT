@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+
+{% block title %}Monthly Financial Report{% endblock %}
+
+{% block content %}
+<!-- Top Action Bar -->
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3 no-print">
+  <div>
+    <h2 class="fw-bold mb-1">Monthly Financial Report 📈</h2>
+    <p class="text-muted mb-0">Detailed executive statement of your earnings, expenditures, and net surplus.</p>
+  </div>
+  <div class="d-flex align-items-center gap-2">
+    <!-- Month/Year selector -->
+    <form method="GET" action="{{ url_for('reports.monthly_report') }}" class="d-flex align-items-center gap-2">
+      <select name="month" class="form-select form-select-sm" onchange="this.form.submit()">
+        {% for m in range(1, 13) %}
+          <option value="{{ m }}" {% if m == selected_month %}selected{% endif %}>
+            {{ ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1] }}
+          </option>
+        {% endfor %}
+      </select>
+      <select name="year" class="form-select form-select-sm" onchange="this.form.submit()">
+        {% for y in range(selected_year - 2, selected_year + 2) %}
+          <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+      </select>
+    </form>
+
+    <button onclick="window.print()" class="btn btn-sm btn-outline-dark d-inline-flex align-items-center gap-1">
+      <i class="bi bi-printer-fill"></i> Print / Save PDF
+    </button>
+  </div>
+</div>
+
+<!-- Printable Report Container -->
+<div class="finance-card p-4 p-md-5 mb-4 shadow-sm" id="printableReport">
+  <!-- Report Header -->
+  <div class="d-flex justify-content-between align-items-center border-bottom pb-4 mb-4">
+    <div class="d-flex align-items-center gap-3">
+      <div class="brand-icon-box" style="width: 44px; height: 44px;">
+        <i class="bi bi-wallet2"></i>
+      </div>
+      <div>
+        <h4 class="fw-bold mb-0">Personal Finance Statement</h4>
+        <span class="text-muted small">Generated for {{ current_user.name }} &bull; Period: {{ summary.month_name }}</span>
+      </div>
+    </div>
+    <div class="text-end">
+      <span class="badge bg-primary px-3 py-2 fs-6">CONFIDENTIAL</span>
+      <div class="text-muted small mt-1">Generated: {{ current_month_name }}</div>
+    </div>
+  </div>
+
+  <!-- Key Summary Metrics -->
+  <div class="row g-3 mb-4">
+    <div class="col-sm-6 col-md-3">
+      <div class="p-3 bg-light rounded-3 border">
+        <span class="text-muted small d-block">Total Inflow (Income)</span>
+        <span class="fs-4 fw-bold text-success">{{ summary.total_income | currency }}</span>
+      </div>
+    </div>
+    <div class="col-sm-6 col-md-3">
+      <div class="p-3 bg-light rounded-3 border">
+        <span class="text-muted small d-block">Total Outflow (Expenses)</span>
+        <span class="fs-4 fw-bold text-danger">{{ summary.total_expenses | currency }}</span>
+      </div>
+    </div>
+    <div class="col-sm-6 col-md-3">
+      <div class="p-3 bg-light rounded-3 border">
+        <span class="text-muted small d-block">Net Retained Savings</span>
+        <span class="fs-4 fw-bold {% if summary.total_savings >= 0 %}text-primary{% else %}text-danger{% endif %}">
+          {{ summary.total_savings | currency }}
+        </span>
+      </div>
+    </div>
+    <div class="col-sm-6 col-md-3">
+      <div class="p-3 bg-light rounded-3 border">
+        <span class="text-muted small d-block">Savings Rate</span>
+        <span class="fs-4 fw-bold text-purple">{{ summary.savings_rate }}%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Performance Highlights -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-4">
+      <div class="p-3 border rounded-3 h-100">
+        <h6 class="fw-bold text-muted small text-uppercase mb-2">Highest Expense Category</h6>
+        {% if summary.top_category %}
+          <div class="fs-5 fw-bold text-dark">{{ summary.top_category }}</div>
+          <span class="text-danger fw-semibold">{{ summary.top_category_amount | currency }}</span>
+          <span class="text-muted small d-block mt-1">
+            ({{ ((summary.top_category_amount / summary.total_expenses) * 100.0) | round(1) if summary.total_expenses > 0 else 0 }}% of total monthly spend)
+          </span>
+        {% else %}
+          <span class="text-muted">No expenses recorded</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="p-3 border rounded-3 h-100">
+        <h6 class="fw-bold text-muted small text-uppercase mb-2">Budget Utilization</h6>
+        <div class="fs-5 fw-bold text-dark">{{ budget_utilization_pct }}%</div>
+        <span class="text-secondary small">{{ budget_data.total_budget_spent | currency }} of {{ budget_data.total_budgeted | currency }} spent</span>
+        <div class="progress mt-2" style="height: 6px;">
+          <div class="progress-bar {% if budget_utilization_pct > 100 %}bg-danger{% elif budget_utilization_pct >= 85 %}bg-warning{% else %}bg-success{% endif %}" role="progressbar" style="width: {{ [budget_utilization_pct, 100]|min }}%;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="p-3 border rounded-3 h-100">
+        <h6 class="fw-bold text-muted small text-uppercase mb-2">Financial Health Score</h6>
+        <div class="fs-5 fw-bold text-{{ health_score.badge_class }}">{{ health_score.score }} / 100</div>
+        <span class="badge bg-{{ health_score.badge_class }}-subtle text-{{ health_score.badge_class }} border border-{{ health_score.badge_class }}-subtle">
+          {{ health_score.rating }}
+        </span>
+        <span class="text-muted small d-block mt-1">{{ health_score.summary_text }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Category Breakdown Breakdown Table -->
+  <div class="mb-4">
+    <h5 class="fw-bold mb-3">Itemized Expense Categories</h5>
+    {% if summary.category_list %}
+    <div class="table-responsive">
+      <table class="table table-bordered align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Category</th>
+            <th class="text-end">Amount (₹)</th>
+            <th class="text-end">Percentage of Total</th>
+            <th style="min-width: 150px;">Visual Distribution</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cat in summary.category_list %}
+          <tr>
+            <td class="fw-bold">{{ cat.category }}</td>
+            <td class="text-end fw-semibold">{{ cat.amount | currency }}</td>
+            <td class="text-end">{{ cat.percentage }}%</td>
+            <td>
+              <div class="progress" style="height: 8px;">
+                <div class="progress-bar bg-primary" role="progressbar" style="width: {{ cat.percentage }}%;"></div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-muted">No expenses recorded for this month.</p>
+    {% endif %}
+  </div>
+
+  <!-- Savings Goals Progress Section -->
+  <div class="mb-4">
+    <h5 class="fw-bold mb-3">Active Savings Milestones</h5>
+    {% if goals %}
+    <div class="row g-3">
+      {% for g in goals %}
+      <div class="col-md-6">
+        <div class="p-3 bg-light rounded-3 border">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="fw-bold">{{ g.name }}</span>
+            <span class="text-success fw-bold">{{ g.progress_percentage }}%</span>
+          </div>
+          <div class="progress mb-2" style="height: 8px;">
+            <div class="progress-bar bg-success" role="progressbar" style="width: {{ g.progress_percentage }}%;"></div>
+          </div>
+          <div class="d-flex justify-content-between small text-muted">
+            <span>Saved: {{ g.current_amount | currency }}</span>
+            <span>Target: {{ g.target_amount | currency }}</span>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-muted">No active savings goals.</p>
+    {% endif %}
+  </div>
+
+  <!-- AI-Generated Executive Summary -->
+  <div class="p-4 bg-light rounded-3 border mt-4">
+    <div class="d-flex align-items-center gap-2 mb-2">
+      <i class="bi bi-robot text-primary fs-5"></i>
+      <h6 class="fw-bold mb-0 text-uppercase">AI Advisory Statement ({{ insights.source }})</h6>
+    </div>
+    <p class="text-secondary mb-2">{{ insights.summary }}</p>
+    <p class="text-secondary mb-2"><strong>Focus Area:</strong> {{ insights.top_concern }}</p>
+    <p class="text-muted small mb-0" style="font-size: 0.75rem;">
+      * {{ insights.disclaimer }}
+    </p>
+  </div>
+</div>
+{% endblock %}
